@@ -22,9 +22,9 @@ DB=$SHOTWELL_DB
 
 
 # first parameters is directory
-dir=$1
+dir=$1; shift
 
-realdir=$(realpath $dir)
+realdir=$(realpath "$dir")
 echo "path is $realdir"
 
 verbose=0
