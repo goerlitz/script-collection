@@ -46,6 +46,8 @@ while getopts "r:d:v" opt; do
         ;;
     v)  verbose=1
         ;;
+    h)  usage
+        ;;
     esac
 done
 
@@ -56,6 +58,8 @@ echo "using max image rating $rating"
 
 # SQL result may contain SPACE - don't split
 IFS=$'\n'
+
+COUNT=0
 
 for img in $(sqlite3 $DB "SELECT filename FROM PhotoTable WHERE filename LIKE '$realdir%' AND filename LIKE '%.CR2' AND rating > 0 AND rating <= $rating ORDER BY 1";); do
 
@@ -94,10 +98,14 @@ for img in $(sqlite3 $DB "SELECT filename FROM PhotoTable WHERE filename LIKE '$
             sqlite3 $DB "DELETE FROM BackingPhotoTable WHERE id=$devcamid;"
 
             mv "$img" .
+
+           (( COUNT++ ))
         fi
     fi
 
 done
 
 unset IFS
+
+echo "DONE: $COUNT CR2 photos removed"
 

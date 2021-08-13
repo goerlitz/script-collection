@@ -25,18 +25,24 @@ DB=$SHOTWELL_DB
 dir=$1; shift
 
 realdir=$(realpath "$dir")
-echo "path is $realdir"
 
+
+# check if directory exists
+[ ! -d "$realdir/" ] && echo "Dir does not exist! - $realdir" && exit 1
+
+
+# set variables
 verbose=0
-
 
 OPTIND=1         # Reset in case getopts has been used previously in the shell.
 
-while getopts "r:d:v" opt; do
+while getopts "r:d:vh" opt; do
     case "$opt" in
     d)  DB=$OPTARG      # shotwell database
         ;;
     v)  verbose=1
+        ;;
+    h)  usage
         ;;
     esac
 done
@@ -44,6 +50,10 @@ done
 shift $((OPTIND-1))
 
 # ------------------
+
+if [ "$verbose" -eq "1" ];then
+    echo "path is $realdir"
+fi
 
 # get the event name for all images in the folder (if multiple events, use most frequent)
 event_name=$(sqlite3 ~/.shotwell_canon/data/photo.db "SELECT name FROM PhotoTable pt JOIN EventTable et ON pt.event_id = et.id WHERE filename LIKE '$realdir%' AND name is not NULL GROUP BY 1 ORDER BY count(*) desc LIMIT 1;")
@@ -57,9 +67,22 @@ if [ -z "$event_name" ]; then
     exit 1
 fi
 
-newdir="$realdir $event_name"
-echo "new dir $newdir"
+# strip old name from dir (if exists)
+lastpath=${realdir##*/}
+pathdate=${lastpath%% *}
 
+newdir="${realdir%/*}/$pathdate $event_name"
+
+if [ "$verbose" -eq "1" ];then
+    echo "new dir $newdir"
+fi
+
+if [ "$realdir" == "$newdir" ]; then
+    echo "STOPPING: new dir is the same - no need to rename!"
+    exit 1
+fi
+
+# first rename dir
 mv "$realdir" "$newdir"
 
 # -----------------
@@ -67,27 +90,38 @@ mv "$realdir" "$newdir"
 # SQL result may contain SPACE - don't split
 IFS=$'\n'
 
+COUNT=0
+COUNT_BACKING=0
+
 # update database entry for every image in directory
 for img in $(sqlite3 $DB "SELECT filename FROM PhotoTable WHERE filename LIKE '$realdir%'";); do
-    path=${img%/*}
     file=${img##*/}
-    new_img="$path $event_name/$file"
+    new_img="$newdir/$file"
 
-    echo "-> $new_img"
-
-    # update filename in photo table
-    sqlite3 $DB "UPDATE PhotoTable SET filename='$new_img' WHERE filename = '$img';"
-
-    # update filename in backing table if there is a developed image version
+    # first update filename in backing table if there is a developed image version
     img_bk=$(sqlite3 $DB "SELECT filepath FROM BackingPhotoTable bpt JOIN PhotoTable pt ON bpt.id = pt.develop_camera_id WHERE filename = '$img'";)
     if [ ! -z "$img_bk" ]; then
-        path_bk=${img_bk%/*}
         file_bk=${img_bk##*/}
-        new_img_bk="$path_bk $event_name/$file_bk"
-        echo "=> $new_img_bk"
+        new_img_bk="$newdir/$file_bk"
+
         sqlite3 $DB "UPDATE BackingPhotoTable SET filepath='$new_img_bk' WHERE filepath = '$img_bk';"
+        (( COUNT_BACKING++ ))
+
+        if [ "$verbose" -eq "1" ];then
+            echo "B=> $new_img_bk"
+        fi
+    fi
+
+    # then update filename in photo table
+    sqlite3 $DB "UPDATE PhotoTable SET filename='$new_img' WHERE filename = '$img';"
+    (( COUNT++ ))
+
+    if [ "$verbose" -eq "1" ];then
+        echo "--> $new_img"
     fi
 done
 
 unset IFS
+
+echo "DONE: $COUNT photos updated (+$COUNT_BACKING backing photos)"
 
