@@ -19,10 +19,6 @@ if [[ ${#} -eq 0 ]]; then
 fi
 
 
-# shotwell database to use (env variable)
-DB=$SHOTWELL_DB
-
-
 # first parameters is directory
 dir=$1; shift
 
@@ -53,6 +49,17 @@ done
 
 shift $((OPTIND-1))
 
+# shotwell database to use (env variable)
+DB=$SHOTWELL_DB
+
+if [ -z $DB ];then
+    echo "ERROR: please specify shotwell database in env 'SHOTWELL_DB'!"
+    exit 1
+fi
+
+if [ "$verbose" -eq "1" ];then
+    echo "USING SHOTWELL DB: $DB"
+fi
 
 echo "using max image rating $rating"
 
