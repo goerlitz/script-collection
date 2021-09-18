@@ -11,7 +11,7 @@ A collection of scripts that implement batch processing functions for features w
 
 * Default: https://flathub.org/apps/details/org.gnome.Shotwell
 * With an [alternative database path](http://shotwell-project.org/doc/html/other-multiple.html)
-    * `/usr/bin/flatpak run --branch=stable --arch=x86_64 --command=shotwell --filesystem=home --file-forwarding org.gnome.Shotwell @@u %U @@ -d ~/.shotwell_canon`
+    * add `-d <path>` to flatpack shotwell command: `/usr/bin/flatpak run --branch=stable --arch=x86_64 --command=shotwell --filesystem=home --file-forwarding org.gnome.Shotwell @@u %U @@ -d ~/.shotwell_2`
 
 ### Script Installation
 
@@ -26,6 +26,10 @@ A collection of scripts that implement batch processing functions for features w
 ### List Photos with low Shotwell Rating (1-3) in current folder
 
 `sqlite3 ~/.shotwell/data/photo.db "SELECT filename FROM PhotoTable WHERE filename LIKE '$(pwd)%' AND rating in (1,2,3);"`
+
+### Get First and Last Date of Photos in Shotwell Database
+
+`sqlite3 ~/.shotwell/data/photo.db "SELECT min(Date(timestamp, 'unixepoch')), max(Date(timestamp, 'unixepoch')) FROM PhotoTable LIMIT 10;"`
 
 ## FAQ
 
