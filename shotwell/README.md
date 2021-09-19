@@ -87,3 +87,8 @@ CREATE TABLE PhotoTable (
     develop_embedded_id INTEGER DEFAULT -1,
     comment TEXT);
 ```
+
+### Shotwell Alternatives
+
+* https://www.digikam.org/
+* https://www.xnview.com/en/xnviewmp/
