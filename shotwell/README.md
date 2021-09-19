@@ -43,6 +43,7 @@ A collection of scripts that implement batch processing functions for features w
 ## Other Tools
 
 * https://github.com/fdlm/shotwell-db-org "reorganise shotwell's photo directory structure"
+* https://github.com/emil-genov/shotwell-export
 
 ## Miscellaneous
 
