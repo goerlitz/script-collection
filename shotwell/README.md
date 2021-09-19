@@ -38,9 +38,20 @@ A collection of scripts that implement batch processing functions for features w
 
 ### I just imported a RAW photo into Shotwell and it looks overexposed or underexposed, why is this and how can I fix it?
 
-> Shotwell renders RAW images by picking some default tone mapping curves that work in most cases, but not all. If you shoot RAW+JPEG or even just plain RAW, your camera probably produces its own JPEG development of your RAW photo at exposure time, either as an associated JPEG file (in the RAW+JPEG case) or embedded in the RAW file itself (in the plain RAW) case. Since your camera presumably knows more about its CCD and the lighting conditions under which your photo was taken than Shotwell does, it’s development will likely look better than Shotwell’s. To switch your RAW Developer to your camera, if available, open the image you want to work with in single-photo mode by double-clicking on it. Then, under the “Developer” submenu of the “Photo” menu choose “Camera.” Due to a known issue with Shotwell 0.11.x and 0.12.x, if “Camera” is already selected you might have to first switch the developer to “Shotwell” and then back to “Camera” again to force the change to take effect. 
+> Shotwell renders RAW images by picking some default tone mapping curves that work in most cases, but not all. If you shoot RAW+JPEG or even just plain RAW, your camera probably produces its own JPEG development of your RAW photo at exposure time, either as an associated JPEG file (in the RAW+JPEG case) or embedded in the RAW file itself (in the plain RAW) case. Since your camera presumably knows more about its CCD and the lighting conditions under which your photo was taken than Shotwell does, it’s development will likely look better than Shotwell’s. To switch your RAW Developer to your camera, if available, open the image you want to work with in single-photo mode by double-clicking on it. Then, under the “Developer” submenu of the “Photo” menu choose “Camera.” Due to a known issue with Shotwell 0.11.x and 0.12.x, if “Camera” is already selected you might have to first switch the developer to “Shotwell” and then back to “Camera” again to force the change to take effect.
+
+## Other Tools
+
+* https://github.com/fdlm/shotwell-db-org "reorganise shotwell's photo directory structure"
 
 ## Miscellaneous
+
+### Mergin two SQLite Databases
+
+https://stackoverflow.com/questions/19968847/merging-two-sqlite-databases-which-both-have-junction-tables
+
+
+### Photo Table Schema
 
 ```
 sqlite> .schema PhotoTable
