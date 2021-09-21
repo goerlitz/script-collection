@@ -1,9 +1,12 @@
 # Shotwell Photo Organizer
 
-A collection of scripts that implement batch processing functions for features which are not available in Shotwell
+Shotwell is nice tool to organize a personal photo collection. But it is missing some features. Hence, this collection of scripts implements some additional batch processing functions which can be quite useful.
 
 * remove raw CR2 files for photos with low rating
 * rename photo directories to include the name of the event in Shotwell
+* move a directory to a different location (bug in Shotwell messes it up for raw images)
+
+All script directly access and alter the Shotwell database. Use with care and always make a backup.
 
 ## Setup
 
@@ -15,7 +18,10 @@ A collection of scripts that implement batch processing functions for features w
 
 ### Script Installation
 
-...
+Link a script directly into the system bin folder
+
+```sudo ln -s script-collection/shotwell/shotwell_rename_folder.sh /usr/bin/shotwell_rename_folder.sh```
+
 
 ## Helpful Tricks
 
