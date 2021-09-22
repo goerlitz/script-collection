@@ -1,9 +1,12 @@
 # Shotwell Photo Organizer
 
-A collection of scripts that implement batch processing functions for features which are not available in Shotwell
+Shotwell is nice tool to organize a personal photo collection. But it is missing some features. Hence, this collection of scripts implements some additional batch processing functions which can be quite useful.
 
 * remove raw CR2 files for photos with low rating
 * rename photo directories to include the name of the event in Shotwell
+* move a directory to a different location (bug in Shotwell messes it up for raw images)
+
+All script directly access and alter the Shotwell database. Use with care and always make a backup.
 
 ## Setup
 
@@ -11,11 +14,14 @@ A collection of scripts that implement batch processing functions for features w
 
 * Default: https://flathub.org/apps/details/org.gnome.Shotwell
 * With an [alternative database path](http://shotwell-project.org/doc/html/other-multiple.html)
-    * `/usr/bin/flatpak run --branch=stable --arch=x86_64 --command=shotwell --filesystem=home --file-forwarding org.gnome.Shotwell @@u %U @@ -d ~/.shotwell_canon`
+    * add `-d <path>` to flatpack shotwell command: `/usr/bin/flatpak run --branch=stable --arch=x86_64 --command=shotwell --filesystem=home --file-forwarding org.gnome.Shotwell @@u %U @@ -d ~/.shotwell_2`
 
 ### Script Installation
 
-...
+Link a script directly into the system bin folder
+
+```sudo ln -s script-collection/shotwell/shotwell_rename_folder.sh /usr/bin/shotwell_rename_folder.sh```
+
 
 ## Helpful Tricks
 
@@ -27,6 +33,10 @@ A collection of scripts that implement batch processing functions for features w
 
 `sqlite3 ~/.shotwell/data/photo.db "SELECT filename FROM PhotoTable WHERE filename LIKE '$(pwd)%' AND rating in (1,2,3);"`
 
+### Get First and Last Date of Photos in Shotwell Database
+
+`sqlite3 ~/.shotwell/data/photo.db "SELECT min(Date(timestamp, 'unixepoch')), max(Date(timestamp, 'unixepoch')) FROM PhotoTable LIMIT 10;"`
+
 ## FAQ
 
 * https://wiki.gnome.org/Apps/Shotwell/FAQ
@@ -34,9 +44,21 @@ A collection of scripts that implement batch processing functions for features w
 
 ### I just imported a RAW photo into Shotwell and it looks overexposed or underexposed, why is this and how can I fix it?
 
-> Shotwell renders RAW images by picking some default tone mapping curves that work in most cases, but not all. If you shoot RAW+JPEG or even just plain RAW, your camera probably produces its own JPEG development of your RAW photo at exposure time, either as an associated JPEG file (in the RAW+JPEG case) or embedded in the RAW file itself (in the plain RAW) case. Since your camera presumably knows more about its CCD and the lighting conditions under which your photo was taken than Shotwell does, it’s development will likely look better than Shotwell’s. To switch your RAW Developer to your camera, if available, open the image you want to work with in single-photo mode by double-clicking on it. Then, under the “Developer” submenu of the “Photo” menu choose “Camera.” Due to a known issue with Shotwell 0.11.x and 0.12.x, if “Camera” is already selected you might have to first switch the developer to “Shotwell” and then back to “Camera” again to force the change to take effect. 
+> Shotwell renders RAW images by picking some default tone mapping curves that work in most cases, but not all. If you shoot RAW+JPEG or even just plain RAW, your camera probably produces its own JPEG development of your RAW photo at exposure time, either as an associated JPEG file (in the RAW+JPEG case) or embedded in the RAW file itself (in the plain RAW) case. Since your camera presumably knows more about its CCD and the lighting conditions under which your photo was taken than Shotwell does, it’s development will likely look better than Shotwell’s. To switch your RAW Developer to your camera, if available, open the image you want to work with in single-photo mode by double-clicking on it. Then, under the “Developer” submenu of the “Photo” menu choose “Camera.” Due to a known issue with Shotwell 0.11.x and 0.12.x, if “Camera” is already selected you might have to first switch the developer to “Shotwell” and then back to “Camera” again to force the change to take effect.
+
+## Other Tools
+
+* https://github.com/fdlm/shotwell-db-org "reorganise shotwell's photo directory structure"
+* https://github.com/emil-genov/shotwell-export
 
 ## Miscellaneous
+
+### Mergin two SQLite Databases
+
+https://stackoverflow.com/questions/19968847/merging-two-sqlite-databases-which-both-have-junction-tables
+
+
+### Photo Table Schema
 
 ```
 sqlite> .schema PhotoTable
@@ -71,3 +93,8 @@ CREATE TABLE PhotoTable (
     develop_embedded_id INTEGER DEFAULT -1,
     comment TEXT);
 ```
+
+### Shotwell Alternatives
+
+* https://www.digikam.org/
+* https://www.xnview.com/en/xnviewmp/
