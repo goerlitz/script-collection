@@ -29,6 +29,8 @@ real_src_dir=$(realpath "$src_dir")
 dst_dir=$1; shift
 real_dst_dir=$(realpath "$dst_dir")
 
+# use source dir name as new dst subfolder
+real_dst_dir="$real_dst_dir/$src_dir"
 
 # check if directories exists
 [ ! -d "$real_src_dir/" ] && echo "Source dir does not exist! - $real_src_dir" && exit 1
