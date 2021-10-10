@@ -134,7 +134,57 @@ for e in $event_names; do
     done
 
 done
+
+# Now do the same for the videos
+
+# get all event names
+event_names=$(sqlite3 $DB "SELECT DISTINCT name FROM VideoTable vt JOIN EventTable et ON vt.event_id = et.id WHERE filename LIKE '$realdir%' AND name is not NULL;")
+
+for e in $event_names; do
+
+    echo "video event: $e"
+
+    # events start with the date - remove it (assuming year is last part), we only want the description
+    event_name=${e#*20?? }
+
+    # check that event name is not empty
+    if [ -z "$event_name" ]; then
+        echo "SKIP: event name is empty"
+        continue
+    fi
+
+    # keep only date of currently processes directory
+    dirname=${realdir##*/}
+    dirdate=${dirname%% *}
+
+    newdir="${realdir%/*}/$dirdate $event_name"
+
+    if [ "$verbose" -eq "1" ];then
+        echo "NEW: $newdir"
+    fi
+
+    # get videos for event and update database entry
+    for vid in $(sqlite3 $DB "SELECT filename FROM VideoTable vt JOIN EventTable et ON vt.event_id = et.id WHERE filename LIKE '$realdir%' AND name = '$e' ORDER BY filename;"); do
+        file=${vid##*/}
+        new_vid="$newdir/$file"
+
+        # move the file
+        mv "$vid" "$new_vid"
+
+        # then update filename in photo table
+        sqlite3 $DB "UPDATE VideoTable SET filename='$new_vid' WHERE filename = '$vid';"
+        (( COUNT++ ))
+
+        if [ "$verbose" -eq "1" ];then
+            echo "--> $new_vid"
+        fi
+
+    done
+
+done
+
+
 unset IFS
 
-echo "DONE: $COUNT photos updated (+$COUNT_BACKING backing photos)"
+echo "DONE: $COUNT photos/videos updated (+$COUNT_BACKING backing photos)"
 
