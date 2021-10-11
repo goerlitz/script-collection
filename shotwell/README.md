@@ -37,6 +37,18 @@ Link a script directly into the system bin folder
 
 `sqlite3 ~/.shotwell/data/photo.db "SELECT min(Date(timestamp, 'unixepoch')), max(Date(timestamp, 'unixepoch')) FROM PhotoTable LIMIT 10;"`
 
+### Copy photos and videos from one database to one other
+
+```
+attach '/home/.../data/photo.db' as db2;
+
+INSERT INTO EventTable (name, primary_photo_id, time_created, primary_source_id, comment) SELECT name, primary_photo_id, time_created, primary_source_id, comment FROM db2.EventTable WHERE name NOT IN (SELECT name from EventTable);
+
+INSERT INTO VideoTable (filename, width, height, clip_duration, is_interpretable, filesize, timestamp, exposure_time, import_id, event_id, md5, time_created, rating, title, backlinks, time_reimported, flags, comment) SELECT filename, width, height, clip_duration, is_interpretable, filesize, timestamp, exposure_time, import_id, event_id, md5, time_created, rating, title, backlinks, time_reimported, flags, comment FROM db2.VideoTable;
+
+UPDATE VideoTable SET event_id = (SELECT (SELECT id from EventTable WHERE name = (SELECT name FROM db2.EventTable WHERE id = vt2.event_id)) FROM db2.VideoTable AS vt2)
+```
+
 ## FAQ
 
 * https://wiki.gnome.org/Apps/Shotwell/FAQ
