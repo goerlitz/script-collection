@@ -98,6 +98,39 @@ CREATE TABLE PhotoTable (
     comment TEXT);
 ```
 
+```
+CREATE TABLE VideoTable (
+    id INTEGER PRIMARY KEY,
+    filename TEXT UNIQUE NOT NULL,
+    width INTEGER, height INTEGER,
+    clip_duration REAL,
+    is_interpretable INTEGER,
+    filesize INTEGER,
+    timestamp INTEGER,
+    exposure_time INTEGER,
+    import_id INTEGER,
+    event_id INTEGER,
+    md5 TEXT,
+    time_created INTEGER,
+    rating INTEGER DEFAULT 0,
+    title TEXT,
+    backlinks TEXT,
+    time_reimported INTEGER,
+    flags INTEGER DEFAULT 0,
+    comment TEXT );
+CREATE INDEX VideoEventIDIndex ON VideoTable (event_id);
+```
+
+```
+CREATE TABLE EventTable (
+    id INTEGER PRIMARY KEY,
+    name TEXT,
+    primary_photo_id INTEGER,
+    time_created INTEGER,
+    primary_source_id TEXT,
+    comment TEXT);
+```
+
 ### Shotwell Alternatives
 
 * https://www.digikam.org/
