@@ -53,7 +53,11 @@ Link a script directly into the system bin folder
 
 ## Miscellaneous
 
-### Mergin two SQLite Databases
+### Database path when using Flatpack
+
+`~/.var/app/org.gnome.Shotwell/data/shotwell/data/photo.db`
+
+### Merging two SQLite Databases
 
 https://stackoverflow.com/questions/19968847/merging-two-sqlite-databases-which-both-have-junction-tables
 
