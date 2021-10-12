@@ -47,6 +47,9 @@ INSERT INTO EventTable (name, primary_photo_id, time_created, primary_source_id,
 
 # copy videos with updated event reference
 INSERT INTO VideoTable (filename, width, height, clip_duration, is_interpretable, filesize, timestamp, exposure_time, import_id, event_id, md5, time_created, rating, title, backlinks, time_reimported, flags, comment) SELECT filename, width, height, clip_duration, is_interpretable, filesize, timestamp, exposure_time, import_id, et.id, md5, vt2.time_created, rating, title, backlinks, time_reimported, flags, vt2.comment FROM db2.VideoTable vt2 JOIN db2.EventTable et2 ON vt2.event_id = et2.id JOIN EventTable et ON et.name = et2.name;
+
+# copy photos with updated event reference
+INSERT INTO PhotoTable (filename, width, height, filesize, timestamp, exposure_time, orientation, original_orientation, import_id, event_id, transformations, md5, thumbnail_md5, exif_md5, time_created, flags, rating, file_format, title, backlinks, time_reimported, editable_id, metadata_dirty, developer, develop_shotwell_id, develop_camera_id, develop_embedded_id, comment) SELECT filename, width, height, filesize, timestamp, exposure_time, orientation, original_orientation, import_id, et.id, transformations, md5, thumbnail_md5, exif_md5, pt2.time_created, flags, rating, file_format, title, backlinks, time_reimported, editable_id, metadata_dirty, developer, develop_shotwell_id, develop_camera_id, develop_embedded_id, pt2.comment FROM db2.PhotoTable pt2 JOIN db2.EventTable et2 ON pt2.event_id = et2.id JOIN EventTable et ON et.name = et2.name;
 ```
 
 ## FAQ
