@@ -42,11 +42,11 @@ Link a script directly into the system bin folder
 ```
 attach '/home/.../data/photo.db' as db2;
 
+# copy events
 INSERT INTO EventTable (name, primary_photo_id, time_created, primary_source_id, comment) SELECT name, primary_photo_id, time_created, primary_source_id, comment FROM db2.EventTable WHERE name NOT IN (SELECT name from EventTable);
 
-INSERT INTO VideoTable (filename, width, height, clip_duration, is_interpretable, filesize, timestamp, exposure_time, import_id, event_id, md5, time_created, rating, title, backlinks, time_reimported, flags, comment) SELECT filename, width, height, clip_duration, is_interpretable, filesize, timestamp, exposure_time, import_id, event_id, md5, time_created, rating, title, backlinks, time_reimported, flags, comment FROM db2.VideoTable;
-
-UPDATE VideoTable SET event_id = (SELECT (SELECT id from EventTable WHERE name = (SELECT name FROM db2.EventTable WHERE id = vt2.event_id)) FROM db2.VideoTable AS vt2)
+# copy videos with updated event reference
+INSERT INTO VideoTable (filename, width, height, clip_duration, is_interpretable, filesize, timestamp, exposure_time, import_id, event_id, md5, time_created, rating, title, backlinks, time_reimported, flags, comment) SELECT filename, width, height, clip_duration, is_interpretable, filesize, timestamp, exposure_time, import_id, et.id, md5, vt2.time_created, rating, title, backlinks, time_reimported, flags, vt2.comment FROM db2.VideoTable vt2 JOIN db2.EventTable et2 ON vt2.event_id = et2.id JOIN EventTable et ON et.name = et2.name;
 ```
 
 ## FAQ
