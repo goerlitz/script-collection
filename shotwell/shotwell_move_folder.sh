@@ -89,6 +89,7 @@ for img in $(sqlite3 $DB "SELECT filename FROM PhotoTable WHERE filename LIKE '$
     # check if new file exists
     if [ ! -e "$new_img" ]; then
         (( COUNT_MISSING++ ))
+        echo "MISSING--> $new_img"
         continue
     fi
 
@@ -127,9 +128,32 @@ for img in $(sqlite3 $DB "SELECT filename FROM PhotoTable WHERE filename LIKE '$
     fi
 done
 
+# update database entry for every video in directory
+for vid in $(sqlite3 $DB "SELECT filename FROM VideoTable WHERE filename LIKE '$real_src_dir%'";); do
+
+    new_vid=${vid/$real_src_dir/$real_dst_dir}
+
+    # check if new file exists
+    if [ ! -e "$new_vid" ]; then
+        (( COUNT_MISSING++ ))
+        continue
+    fi
+
+    # update video
+    if [ "$dryrun" -eq "0" ];then
+        sqlite3 $DB "UPDATE VideoTable SET filename='$new_vid' WHERE filename = '$vid';"
+        (( COUNT++ ))
+    fi
+
+    if [ "$verbose" -eq "1" ];then
+        echo "--> $new_vid"
+    fi
+done
+
+
 unset IFS
 
 echo "MISSING $COUNT_MISSING photos"
 
-echo "DONE: $COUNT photos updated (+$COUNT_BACKING backing photos)"
+echo "DONE: $COUNT photos/videos updated (+$COUNT_BACKING backing photos)"
 
