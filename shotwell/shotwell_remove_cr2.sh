@@ -1,14 +1,14 @@
 #!/bin/bash
 
-# Remove CR2 images for images with a low rating.
+# Remove raw CR2 images for images that have a low rating.
 # Will only be applied for images with CR2 and JPG file with the same name.
 # image entry in shotwell database will be updated from CR2->JPG.
 
-
 function usage {
-        echo "Usage: $(basename $0) <directory>" 2>&1
+        echo "Usage: $(basename $0) <options> <directory>" 2>&1
         echo '   -r   highest image rating (default=3)'
-        echo '   -v   verbose'
+        echo '   -v   verbose, add more -v to increase verbosity'
+        echo '   -t   test (dry run)'
         echo '   -h   help (this text)'
         exit 1
 }
@@ -18,60 +18,85 @@ if [[ ${#} -eq 0 ]]; then
    usage
 fi
 
-
-# first parameters is directory
-dir=$1; shift
-
-realdir=$(realpath "$dir")
-echo "path is $realdir"
-
-
 verbose=0
+dryrun=0
 
 # default rating is 3
 rating=3
 
+# shotwell database to use (env variable)
+DB=$SHOTWELL_DB
 
 OPTIND=1         # Reset in case getopts has been used previously in the shell.
 
-while getopts "r:d:v" opt; do
+while getopts "r:vth" opt; do
     case "$opt" in
-    d)  DB=$OPTARG      # shotwell database
+    h)  usage
         ;;
     r)  rating=$OPTARG  # shotwell image rating
         ;;
-    v)  verbose=1
+    t)  dryrun=1;verbose=1
         ;;
-    h)  usage
+    v)  (( verbose++ ))
         ;;
     esac
 done
 
 shift $((OPTIND-1))
 
-# shotwell database to use (env variable)
-DB=$SHOTWELL_DB
+# ------------------
 
+# check if shotwell database was set
 if [ -z $DB ];then
     echo "ERROR: please specify shotwell database in env 'SHOTWELL_DB'!"
     exit 1
 fi
 
-if [ "$verbose" -eq "1" ];then
-    echo "USING SHOTWELL DB: $DB"
+echo "SHOTWELL DB: '$DB'"
+
+
+# first regular parameter is directory
+dir=$1; shift
+
+realdir=$(realpath "$dir")
+
+if [ -z "$realdir" ];then
+    echo "ERROR: path '$dir' does not exist!"
+    exit 1
+else
+    echo "TARGET PATH: '$realdir'"
 fi
 
 echo "using max image rating $rating"
+
+if [ "$dryrun" -eq "1" ];then
+    echo ">>> ---DRY RUN--- <<<"
+fi
+
+
+# function to prepare SQL path strings
+sql_safe() {
+    local tmp
+
+    # duplicate single quotes (otherwise error)
+    tmp=${1//\'/\'\'} # replace '
+    echo $tmp
+}
 
 # SQL result may contain SPACE - don't split
 IFS=$'\n'
 
 COUNT=0
 
-for img in $(sqlite3 $DB "SELECT filename FROM PhotoTable WHERE filename LIKE '$realdir%' AND filename LIKE '%.CR2' AND rating > 0 AND rating <= $rating ORDER BY 1";); do
+# process all images that have the specified max rating (default=3)
+for img in $(sqlite3 $DB "SELECT filename FROM PhotoTable WHERE filename LIKE '$(sql_safe "$realdir")%' AND filename LIKE '%.CR2' AND rating > 0 AND rating <= $rating ORDER BY 1";); do
+
+    if [ "$verbose" -ne "0" ];then
+        echo "PROCESSING '$img'"
+    fi
 
     # looking for camera-developed image in backing files
-    devcamid=$(sqlite3 $DB "SELECT develop_camera_id FROM PhotoTable WHERE filename='$img'";)
+    devcamid=$(sqlite3 $DB "SELECT develop_camera_id FROM PhotoTable WHERE filename='$(sql_safe "$img")'";)
     if [ -z $devcamid ]; then
         echo "ERROR: no entry for $img"
     else
@@ -80,6 +105,7 @@ for img in $(sqlite3 $DB "SELECT filename FROM PhotoTable WHERE filename LIKE '$
         if [ -z $backing ]; then
             echo "ERROR: No backing entry for $img"
         else
+            # split SQL result
             readarray -d \| -t split<<< "$backing"
             filepath=${split[1]}
             timestamp=${split[2]}
@@ -91,22 +117,22 @@ for img in $(sqlite3 $DB "SELECT filename FROM PhotoTable WHERE filename LIKE '$
             time_created=${split[8]}
             md5=$(md5sum "$filepath" | cut -d" " -f1)
 
-            if [ "$verbose" -eq "1" ];then
-                echo \> $filepath
-                echo \> ts=$timestamp fs=$filesize w=$width h=$height fmt=$file_format md5=$md5
+            if [ "$verbose" -gt "1" ];then
+                echo "CR2->JPG: ts=$timestamp fs=$filesize w=$width h=$height fmt=$file_format md5=$md5"
             fi
 
-            echo UPDATING... $filepath
+            if [ "$dryrun" -eq "0" ];then
+                # replace CR2 with backing photo
+                sqlite3 $DB "UPDATE PhotoTable SET filename='$(sql_safe "$filepath")', width=$width, height=$height, filesize=$filesize, timestamp=$timestamp, time_created=$time_created, md5='$md5', file_format=$file_format, developer='SHOTWELL', develop_camera_id=-1 WHERE filename = '$(sql_safe "$img")';"
 
-            # replace CR2 with backing photo
-            sqlite3 $DB "UPDATE PhotoTable SET filename='$filepath', width=$width, height=$height, filesize=$filesize, timestamp=$timestamp, time_created=$time_created, md5='$md5', file_format=$file_format, developer='SHOTWELL', develop_camera_id=-1 WHERE filename = '$img';"
+                # remove backing photo
+                sqlite3 $DB "DELETE FROM BackingPhotoTable WHERE id=$devcamid;"
 
-            # remove backing photo
-            sqlite3 $DB "DELETE FROM BackingPhotoTable WHERE id=$devcamid;"
+                mv "$img" .
 
-            mv "$img" .
+               (( COUNT++ ))
+            fi
 
-           (( COUNT++ ))
         fi
     fi
 
